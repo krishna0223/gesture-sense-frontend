@@ -1,21 +1,73 @@
 // ================================================
 // CONFIGURATION
 // ================================================
-const API_BASE = "https://gesture-sense-backend-production.up.railway.app"; // 👈 replace with your actual backend URL
-const POLL_INTERVAL = 200; // milliseconds (5 FPS for UI updates)
+const API_BASE = "https://gesture-sense-backend-production.up.railway.app";
+const POLL_INTERVAL = 200;
 let lastUpdateTime = Date.now();
 let frameCount = 0;
+
+// Video elements
+let videoElement;
+let canvasElement;
+let canvasCtx;
+
+// ================================================
+// INITIALIZE WEBCAM
+// ================================================
+async function initializeWebcam() {
+    videoElement = document.createElement('video');
+    canvasElement = document.createElement('canvas');
+    canvasCtx = canvasElement.getContext('2d');
+    
+    canvasElement.width = 200;
+    canvasElement.height = 200;
+    
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 200, height: 200 } 
+        });
+        videoElement.srcObject = stream;
+        videoElement.play();
+        
+        updateStatus('Camera ready', 'active');
+        return true;
+    } catch (error) {
+        console.error('❌ Camera error:', error);
+        updateStatus('Camera access denied', 'inactive');
+        return false;
+    }
+}
+
+// ================================================
+// CAPTURE FRAME AS BASE64
+// ================================================
+function captureFrame() {
+    if (!videoElement || videoElement.readyState !== 4) {
+        return null;
+    }
+    
+    canvasCtx.drawImage(videoElement, 0, 0, 200, 200);
+    return canvasElement.toDataURL('image/jpeg');
+}
 
 // ================================================
 // PREDICTION POLLING
 // ================================================
 async function pollPredictions() {
     try {
-        const response = await fetch('https://gesture-sense-backend-production.up.railway.app/predict', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ image: base64ImageData })
-                                });
+        const base64ImageData = captureFrame();
+        
+        if (!base64ImageData) {
+            setTimeout(pollPredictions, POLL_INTERVAL);
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE}/predict`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64ImageData })
+        });
+        
         const data = await response.json();
         
         // Update FPS counter
@@ -49,19 +101,15 @@ function updatePredictionDisplay(data) {
     const confidenceValue = document.getElementById('confidenceValue');
     
     if (data.label && data.confidence > 0) {
-        // Update letter
         letterElement.textContent = data.label;
         letterElement.style.color = getConfidenceColor(data.confidence);
         
-        // Update confidence bar
         const confidencePercent = (data.confidence * 100).toFixed(1);
         confidenceFill.style.width = confidencePercent + '%';
         confidenceValue.textContent = confidencePercent + '%';
         
-        // Update status
         updateStatus('Hand detected - Predicting...', 'active');
     } else {
-        // No hand detected
         letterElement.textContent = '-';
         letterElement.style.color = '#ccc';
         confidenceFill.style.width = '0%';
@@ -74,9 +122,9 @@ function updatePredictionDisplay(data) {
 // HELPER FUNCTIONS
 // ================================================
 function getConfidenceColor(confidence) {
-    if (confidence >= 0.8) return '#4caf50'; // Green
-    if (confidence >= 0.6) return '#ff9800'; // Orange
-    return '#f44336'; // Red
+    if (confidence >= 0.8) return '#4caf50';
+    if (confidence >= 0.6) return '#ff9800';
+    return '#f44336';
 }
 
 function updateStatus(text, state) {
@@ -90,10 +138,14 @@ function updateStatus(text, state) {
 // ================================================
 // APP START
 // ================================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 ASL Recognition started, polling from', API_BASE);
-    pollPredictions();
+    
+    const cameraReady = await initializeWebcam();
+    if (cameraReady) {
+        // Wait for video to be ready before starting predictions
+        videoElement.addEventListener('loadeddata', () => {
+            pollPredictions();
+        });
+    }
 });
-
-
-
