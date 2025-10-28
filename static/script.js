@@ -1,7 +1,7 @@
 // ================================================
 // CONFIGURATION
 // ================================================
-const API_BASE = "https://asl-api-production.up.railway.app"; // 👈 replace with your actual backend URL
+const API_BASE = "gesture-sense-backend-production.up.railway.app"; // 👈 replace with your actual backend URL
 const POLL_INTERVAL = 200; // milliseconds (5 FPS for UI updates)
 let lastUpdateTime = Date.now();
 let frameCount = 0;
@@ -90,3 +90,4 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 ASL Recognition started, polling from', API_BASE);
     pollPredictions();
 });
+
