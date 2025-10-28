@@ -11,7 +11,11 @@ let frameCount = 0;
 // ================================================
 async function pollPredictions() {
     try {
-        const response = await fetch(`${API_BASE}/predict`);
+        const response = await fetch('https://gesture-sense-backend-production.up.railway.app/predict', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ image: base64ImageData })
+                                });
         const data = await response.json();
         
         // Update FPS counter
@@ -90,5 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 ASL Recognition started, polling from', API_BASE);
     pollPredictions();
 });
+
 
 
