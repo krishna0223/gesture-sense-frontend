@@ -1,12 +1,17 @@
-// Prediction polling configuration
+// ================================================
+// CONFIGURATION
+// ================================================
+const API_BASE = "https://asl-api-production.up.railway.app"; // 👈 replace with your actual backend URL
 const POLL_INTERVAL = 200; // milliseconds (5 FPS for UI updates)
 let lastUpdateTime = Date.now();
 let frameCount = 0;
 
-// Start polling for predictions
+// ================================================
+// PREDICTION POLLING
+// ================================================
 async function pollPredictions() {
     try {
-        const response = await fetch('/predict');
+        const response = await fetch(`${API_BASE}/predict`);
         const data = await response.json();
         
         // Update FPS counter
@@ -23,7 +28,7 @@ async function pollPredictions() {
         updatePredictionDisplay(data);
         
     } catch (error) {
-        console.error('Error fetching prediction:', error);
+        console.error('❌ Error fetching prediction:', error);
         updateStatus('Error connecting to server', 'inactive');
     }
     
@@ -31,7 +36,9 @@ async function pollPredictions() {
     setTimeout(pollPredictions, POLL_INTERVAL);
 }
 
-// Update prediction display
+// ================================================
+// UPDATE PREDICTION DISPLAY
+// ================================================
 function updatePredictionDisplay(data) {
     const letterElement = document.getElementById('predictedLetter');
     const confidenceFill = document.getElementById('confidenceFill');
@@ -59,14 +66,15 @@ function updatePredictionDisplay(data) {
     }
 }
 
-// Get color based on confidence level
+// ================================================
+// HELPER FUNCTIONS
+// ================================================
 function getConfidenceColor(confidence) {
     if (confidence >= 0.8) return '#4caf50'; // Green
     if (confidence >= 0.6) return '#ff9800'; // Orange
     return '#f44336'; // Red
 }
 
-// Update status indicator
 function updateStatus(text, state) {
     const statusText = document.getElementById('statusText');
     const indicator = document.querySelector('.status-indicator');
@@ -75,8 +83,10 @@ function updateStatus(text, state) {
     indicator.className = 'status-indicator ' + state;
 }
 
-// Start the application
+// ================================================
+// APP START
+// ================================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('ASL Recognition started');
+    console.log('🚀 ASL Recognition started, polling from', API_BASE);
     pollPredictions();
 });
