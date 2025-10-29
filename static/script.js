@@ -6,12 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let frameCount = 0;
 
     // Attempt to access webcam
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            startPredictionLoop();
-        })
+    navigator.mediaDevices.getUserMedia({ 
+            video: { 
+            width: { ideal: 640 },            
+            height: { ideal: 480 }
+        } 
+    })
+
         .catch(err => {
             console.error('Webcam error:', err);
             document.getElementById('statusText').textContent = 'Camera access denied';
@@ -19,10 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     function captureFrame() {
-        // Draw video frame to canvas and return base64 image
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', 0.8);
-    }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.95);  // ← Increased from 0.8
+}
+
 
     function startPredictionLoop() {
         setInterval(async () => {
@@ -78,3 +79,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
